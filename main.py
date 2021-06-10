@@ -64,9 +64,7 @@ async def 가입(ctx):
     datetime_now = now.strftime("%Y-%m-%d %H:%M:%S")
 
     if check:
-        sql = f"""
-        INSERT INTO UserInfo VALUES(?, ?, ?, ?, ?)
-        """
+        sql = "INSERT INTO UserInfo VALUES(?, ?, ?, ?, ?)"
         cur.execute(
             sql,
             (user_id, 'NULL', 'NULL', 'NULL', datetime_now,)
