@@ -10,7 +10,7 @@ def check_id(user_id):
     con = sqlite3.connect('Test.db', isolation_level=None)
     cur = con.cursor()
     cur.execute(
-        "SELECT id FROM UserInfo WHERE id = ?",
+        "SELECT id FROM UserList WHERE id = ?",
         (user_id,)
     )
 
@@ -40,8 +40,8 @@ async def 도움(ctx):
     embed = discord.Embed(
         title="도움말",
         description='''
-        **!가입**
-        RR Stock 게임 서비스에 가입할 수 있습니다.
+        **!등록**
+        RR Stock 게임 서비스에 등록할 수 있습니다.
                                 
         **!탈퇴**
         RR Stock 게임 서비스에서 탈퇴할 수 있습니다.
@@ -55,35 +55,53 @@ async def 도움(ctx):
 
 
 @bot.command()
-async def 가입(ctx):
-    user_id = ctx.author.id
+async def 등록(ctx, member: discord.Member = None):
+    member = ctx.author if not member else member
+
     con = sqlite3.connect("Test.db", isolation_level=None)
     cur = con.cursor()
-    check = check_id(user_id)
     now = datetime.datetime.now()
     datetime_now = now.strftime("%Y-%m-%d %H:%M:%S")
 
+    user_id = ctx.author.id
+    check = check_id(user_id)
+
     if check:
-        sql = "INSERT INTO UserInfo VALUES(?, ?, ?, ?, ?)"
         cur.execute(
-            sql,
-            (user_id, 'NULL', 'NULL', 'NULL', datetime_now,)
+            "INSERT INTO UserList VALUES(?, ?, ?, ?)",
+            (user_id, member.display_name, 0, datetime_now,)
         )
         embed = discord.Embed(
-            title=':wave: 가입',
-            description='성공적으로 RR Stock 게임 서비스에 가입되셨습니다.', color=0xffc0cb)
+            title=':wave: 등록',
+            description='성공적으로 RR Stock 게임 서비스에 등록되셨습니다.', color=0xffc0cb)
         embed.set_footer(
             text=f"{ctx.message.author.name} | RR Stock", icon_url=ctx.message.author.avatar_url)
         await ctx.send(embed=embed)
     else:
         embed = discord.Embed(
-            title=':wave: 가입',
-            description='이미 RR Stock 게임 서비스에 가입되어 있습니다.', color=0xff0000)
+            title=':wave: 등록',
+            description='이미 RR Stock 게임 서비스에 등록되어 있습니다.', color=0xff0000)
         embed.set_footer(
             text=f"{ctx.message.author.name} | RR Stock", icon_url=ctx.message.author.avatar_url)
         await ctx.send(embed=embed)
 
     con.close()
+
+@bot.command()
+async def ulist(ctx, member: discord.Member = None):
+    member = ctx.author if not member else member
+    roles = [role for role in member.roles]
+
+    embed = discord.Embed(colour=member.color)
+    embed.set_author(name=f"유저정보 - {member}")
+    embed.add_field(name="ID:", value=member.id)
+    embed.add_field(name="display name:", value=member.display_name)
+    embed.add_field(
+        name=f"Roles ({len(roles)}):",
+        value=" ".join([role.mention for role in roles])
+    )
+
+    await ctx.send(embed=embed)
 
 
 @bot.command()
@@ -102,7 +120,7 @@ async def 탈퇴(ctx):
         await ctx.send(embed=embed)
     else:
         cur.execute(
-            "DELETE FROM UserInfo WHERE id = ?",
+            "DELETE FROM UserList WHERE id = ?",
             (user_id,)
         )
 
@@ -119,5 +137,7 @@ async def 탈퇴(ctx):
 
     con.close()
 
+# with open("token.txt", 'r') as f:
+#     bot.run(f.read())
 
 bot.run(os.environ['token'])
