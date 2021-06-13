@@ -152,7 +152,7 @@ async def 잔고(ctx, member: discord.Member = None):
     if check:
         cur.execute(
             "SELECT balance FROM UserList WHERE id = ?",
-            (user_id, )
+            (user_id,)
         )
         # fetch data
         rows = cur.fetchall()
@@ -168,6 +168,25 @@ async def 잔고(ctx, member: discord.Member = None):
         embed.set_footer(
             text=f"{ctx.message.author.name} | RR Stock", icon_url=ctx.message.author.avatar_url)
         await ctx.send(embed=embed)
+
+    con.close()
+
+
+@bot.command()
+async def 돈주기(ctx, amount):
+    con = sqlite3.connect("Test.db", isolation_level=None)
+    cur = con.cursor()
+
+    cur.execute(
+        "UPDATE UserList SET balance = balance + ?",
+        (amount,)
+    )
+    embed = discord.Embed(
+        title=':wave: 돈주기',
+        description=f'모든 멤버들에게 +{amount}만큼 돈을 주었습니다.', color=0xffc0cb)
+    embed.set_footer(
+        text=f"{ctx.message.author.name} | RR Stock", icon_url=ctx.message.author.avatar_url)
+    await ctx.send(embed=embed)
 
     con.close()
 
