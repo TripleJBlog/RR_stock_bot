@@ -17,9 +17,10 @@ def check_id(user_id):
     rows = cur.fetchall()
     for i in rows:
         alr_exist.append(i[0])
-    if user_id not in alr_exist:
+    # user id 가 이미 있을 경우 True 리턴
+    if user_id in alr_exist:
         return True
-    elif user_id in alr_exist:
+    else:
         return False
     con.close()
 
@@ -67,6 +68,13 @@ async def 등록(ctx, member: discord.Member = None):
     check = check_id(user_id)
 
     if check:
+        embed = discord.Embed(
+            title=':wave: 등록',
+            description='이미 RR Stock 게임 서비스에 등록되어 있습니다.', color=0xff0000)
+        embed.set_footer(
+            text=f"{ctx.message.author.name} | RR Stock", icon_url=ctx.message.author.avatar_url)
+        await ctx.send(embed=embed)
+    else:
         cur.execute(
             "INSERT INTO UserList VALUES(?, ?, ?, ?)",
             (user_id, member.display_name, 0, datetime_now,)
@@ -77,15 +85,9 @@ async def 등록(ctx, member: discord.Member = None):
         embed.set_footer(
             text=f"{ctx.message.author.name} | RR Stock", icon_url=ctx.message.author.avatar_url)
         await ctx.send(embed=embed)
-    else:
-        embed = discord.Embed(
-            title=':wave: 등록',
-            description='이미 RR Stock 게임 서비스에 등록되어 있습니다.', color=0xff0000)
-        embed.set_footer(
-            text=f"{ctx.message.author.name} | RR Stock", icon_url=ctx.message.author.avatar_url)
-        await ctx.send(embed=embed)
 
     con.close()
+
 
 @bot.command()
 async def ulist(ctx, member: discord.Member = None):
@@ -112,13 +114,6 @@ async def 탈퇴(ctx):
     check = check_id(user_id)
 
     if check:
-        embed = discord.Embed(
-            title=':wave: 탈퇴',
-            description='RR Stock 게임 서비스에 가입되어 있지 않습니다.', color=0xff0000)
-        embed.set_footer(
-            text=f"{ctx.message.author.name} | RR Stock", icon_url=ctx.message.author.avatar_url)
-        await ctx.send(embed=embed)
-    else:
         cur.execute(
             "DELETE FROM UserList WHERE id = ?",
             (user_id,)
@@ -134,10 +129,50 @@ async def 탈퇴(ctx):
         embed.set_footer(
             text=f"{ctx.message.author.name} | RR Stock", icon_url=ctx.message.author.avatar_url)
         await ctx.send(embed=embed)
+    else:
+        embed = discord.Embed(
+            title=':wave: 탈퇴',
+            description='RR Stock 게임 서비스에 가입되어 있지 않습니다.', color=0xff0000)
+        embed.set_footer(
+            text=f"{ctx.message.author.name} | RR Stock", icon_url=ctx.message.author.avatar_url)
+        await ctx.send(embed=embed)
 
     con.close()
 
-# with open("token.txt", 'r') as f:
-#     bot.run(f.read())
 
-bot.run(os.environ['token'])
+@bot.command()
+async def 잔고(ctx, member: discord.Member = None):
+    member = ctx.author if not member else member
+    user_id = ctx.author.id
+    check = check_id(user_id)
+
+    con = sqlite3.connect("Test.db", isolation_level=None)
+    cur = con.cursor()
+
+    if check:
+        cur.execute(
+            "SELECT balance FROM UserList WHERE id = ?",
+            (user_id, )
+        )
+        # fetch data
+        rows = cur.fetchall()
+        balance = 1
+        for row in rows:
+            balance = row[0]
+
+        print(balance)
+
+        embed = discord.Embed(
+            title=':wave: 잔고',
+            description=f'{member.display_name}님의 잔고: {balance}', color=0xffc0cb)
+        embed.set_footer(
+            text=f"{ctx.message.author.name} | RR Stock", icon_url=ctx.message.author.avatar_url)
+        await ctx.send(embed=embed)
+
+    con.close()
+
+
+with open("token.txt", 'r') as f:
+    bot.run(f.read())
+
+# bot.run(os.environ['token'])
